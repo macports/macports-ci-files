@@ -1,0 +1,76 @@
+trigger:
+  tags:
+    include:
+      - "v*"
+
+jobs:
+  - job: build_and_deploy_base
+    displayName: "macOS-10.14"
+    timeoutInMinutes: 0
+    pool:
+      vmImage: 'macOS-10.14'
+    steps:
+      - checkout: self
+        displayName: "Checkout repository"
+        fetchDepth: 64
+      - bash: |
+          sudo mkdir /opt/local.old
+          sudo mv /usr/local/* /opt/local.old
+        displayName: "Cleanup /usr/local"
+      - bash: |
+          set -eu
+          tag=$(basename $GITHUB_REF)
+          version=$(echo $tag | colrm 1 1)
+          curl -LO https://github.com/macports/macports-base/releases/download/${tag}/MacPorts-${version}.tar.bz2 \
+            -O https://github.com/macports/macports-base/releases/download/${tag}/MacPorts-${version}.tar.bz2.sha256.sig
+          openssl dgst -sha256 -verify jmr-pubkey.pem -signature MacPorts-${version}.tar.bz2.sha256.sig \
+            MacPorts-${version}.tar.bz2
+          tar -xjf MacPorts-${version}.tar.bz2
+          mv MacPorts-${version} MacPorts
+          rm MacPorts-${version}.tar.bz2 MacPorts-${version}.tar.bz2.sha256.sig'
+        displayName: "Fetch & Extract MacPorts Base"
+      - bash: |
+          set -eu
+          cd MacPorts
+          ./configure
+        displayName: "Configure MacPorts Base"
+      - bash: |
+          set -eu
+          cd MacPorts
+          make -j$(sysctl -n hw.activecpu)
+        displayName: "Build MacPorts Base"
+      - bash: |
+          set -eu
+          cd MacPorts
+          sudo make install
+        displayName: "Install MacPorts Base"
+      - bash: |
+          set -eu
+          cd MacPorts
+          make test
+        displayName: "Test MacPorts Base"
+      - bash: |
+          set -eu
+          cd MacPorts
+
+          sed -i "" "s/-v selfupdate/version/" portmgr/dmg/postflight
+          sudo install -d -m755 /opt/local/libexec/macports/postflight
+          sudo install -m755 \
+            portmgr/dmg/postflight \
+            /opt/local/libexec/macports/postflight/
+          sudo install -m644 \
+            src/*.tcl \
+            /opt/local/libexec/macports/postflight/
+          os_major=$(uname -r | cut -f 1 -d .)
+          tar \
+            --exclude '/opt/local/var/macports/sip-workaround/?*' \
+            -cjf "MacPorts-${os_major}.tar.bz2" \
+            /opt/local
+        displayName: "Prepare Deployment"
+      - task: GithubRelease@0
+        displayName: "Deploy binary to release"
+        inputs:
+            gitHubConnection: macports
+            repositoryName: macports/macports-ci-files
+            assets: ./MacPorts-*.tar.bz2
+            assetUploadMode: 'replace'
