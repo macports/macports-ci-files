@@ -70,7 +70,7 @@ jobs:
             /opt/local/libexec/macports/postflight/
           tar \
             --exclude '/opt/local/var/macports/sip-workaround/?*' \
-            -cjf "MacPorts.tar.bz2" \
+            -cjf "../MacPorts.tar.bz2" \
             /opt/local
       - name: version
         run: echo "::set-output name=version::$(cat MacPorts/config/macports_version)"

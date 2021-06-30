@@ -64,7 +64,7 @@ jobs:
           os_major=$(uname -r | cut -f 1 -d .)
           tar \
             --exclude '/opt/local/var/macports/sip-workaround/?*' \
-            -cjf "MacPorts-${os_major}.tar.bz2" \
+            -cjf "../MacPorts-${os_major}.tar.bz2" \
             /opt/local
         displayName: "Prepare Deployment"
       - task: GithubRelease@0
