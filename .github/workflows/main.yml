@@ -2,9 +2,9 @@
 name: "Build & Deploy MacPorts Base for CI"
 
 on:
-  push:
-    tags:
-        - 'v*'
+  release:
+    types:
+        - created
 
 jobs:
   build:
@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-10.15, macos-11.0]
+        os: [macos-10.15, macos-11]
 
     steps:
       - name: Checkout repository
@@ -68,33 +68,20 @@ jobs:
           sudo install -m644 \
             src/*.tcl \
             /opt/local/libexec/macports/postflight/
+          os_major=$(uname -r | cut -f 1 -d .)
           tar \
             --exclude '/opt/local/var/macports/sip-workaround/?*' \
-            -cjf "../MacPorts.tar.bz2" \
+            -cjf "../MacPorts-${os_major}.tar.bz2" \
             /opt/local
-      - name: version
-        run: echo "::set-output name=version::$(cat MacPorts/config/macports_version)"
-        id: version
       - name: os_major
         run: echo "::set-output name=os_major::$(uname -r | cut -f 1 -d .)"
         id: os_major
-      - name: Create release
-        uses: actions/create-release@v1
-        id: create_release
-        with:
-          draft: false
-          prerelease: false
-          release_name: ${{ format( 'MacPorts {0}', steps.version.outputs.version ) }}
-          tag_name: ${{ github.ref }}
-          body: ${{ format( 'Binaries of MacPorts {0} for CI use.', steps.version.outputs.version ) }}
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
       - name: Deploy binary to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./MacPorts.tar.bz2
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ format( './MacPorts-{0}.tar.bz2', steps.os_major.outputs.os_major ) }}
           asset_name: ${{ format( 'MacPorts-{0}.tar.bz2', steps.os_major.outputs.os_major ) }}
           asset_content_type: application/x-bzip2

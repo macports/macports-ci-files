@@ -1,7 +1,6 @@
 trigger:
   tags:
-    include:
-      - "v*"
+    include: "v*"
 
 jobs:
   - job: build_and_deploy_base
