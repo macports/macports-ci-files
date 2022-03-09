@@ -51,8 +51,9 @@ jobs:
           cd MacPorts
           sudo make install
       - name: Test MacPorts Base
+        continue-on-error: true
         run: |
-          set -u
+          set -eu
           cd MacPorts
           make test
       - name: Prepare Deployment
