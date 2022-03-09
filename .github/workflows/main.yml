@@ -52,7 +52,7 @@ jobs:
           sudo make install
       - name: Test MacPorts Base
         run: |
-          set -eu
+          set -u
           cd MacPorts
           make test
       - name: Prepare Deployment
