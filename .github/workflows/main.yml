@@ -60,6 +60,8 @@ jobs:
       - name: Prepare Deployment
         run: |
           set -eu
+          tag=$(basename $GITHUB_REF)
+          version=$(echo $tag | colrm 1 1)
           cd MacPorts
 
           sed -i "" "s/-v selfupdate/version/" portmgr/dmg/postflight
@@ -73,17 +75,17 @@ jobs:
           os_major=$(uname -r | cut -f 1 -d .)
           tar \
             --exclude '/opt/local/var/macports/sip-workaround/?*' \
-            -cjf "../MacPorts-${os_major}.tar.bz2" \
+            -cjf "../MacPorts-${version}-${os_major}.tar.bz2" \
             /opt/local
-      - name: os_major
-        run: echo "::set-output name=os_major::$(uname -r | cut -f 1 -d .)"
-        id: os_major
+      - name: filename
+        run: echo "::set-output name=filename::MacPorts-$(echo $(basename $GITHUB_REF) | colrm 1 1)-$(uname -r | cut -f 1 -d .).tar.bz2"
+        id: filename
       - name: Deploy binary to release
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ format( './MacPorts-{0}.tar.bz2', steps.os_major.outputs.os_major ) }}
-          asset_name: ${{ format( 'MacPorts-{0}.tar.bz2', steps.os_major.outputs.os_major ) }}
+          asset_path: ${{ format( './{0}', steps.filename.outputs.filename ) }}
+          asset_name: ${{ format( '{0}', steps.filename.outputs.filename ) }}
           asset_content_type: application/x-bzip2
