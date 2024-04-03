@@ -78,7 +78,7 @@ jobs:
             -cjf "../MacPorts-${version}-${os_major}.tar.bz2" \
             /opt/local
       - name: filename
-        run: echo "::set-output name=filename::MacPorts-$(echo $(basename $GITHUB_REF) | colrm 1 1)-$(uname -r | cut -f 1 -d .).tar.bz2"
+        run: echo "filename=MacPorts-$(echo $(basename $GITHUB_REF) | colrm 1 1)-$(uname -r | cut -f 1 -d .).tar.bz2" >> "$GITHUB_OUTPUT"
         id: filename
       - name: Deploy binary to release
         uses: softprops/action-gh-release@v2
