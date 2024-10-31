@@ -36,7 +36,6 @@ jobs:
           tar -xjf MacPorts-${version}.tar.bz2
           mv MacPorts-${version} MacPorts
           rm MacPorts-${version}.tar.bz2 MacPorts-${version}.tar.bz2.sha256.sig
-          patch -N -t -d MacPorts -p1 < c3c817e.diff
       - name: Select Xcode version
         run: |
           case "`uname -r`" in
