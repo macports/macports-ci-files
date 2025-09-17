@@ -3,8 +3,7 @@ name: "Build & Deploy MacPorts Base for CI"
 
 on:
   release:
-    types:
-        - created
+    types: [released, edited]
   workflow_dispatch:
 
 jobs:
